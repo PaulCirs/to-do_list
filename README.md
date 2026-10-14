@@ -9,12 +9,12 @@ navigateur ──► frontend (HTML/JS, servi par nginx) ──► api (FastAPI)
 
 ## Organisation
 
-| Dossier              | Contenu                                              |
-|----------------------|------------------------------------------------------|
-| `api/`               | API Python (FastAPI + SQLAlchemy) et ses tests       |
-| `frontend/`          | Page web statique (HTML, CSS, JavaScript)            |
-| `k8s/`               | Manifests Kubernetes (étape 4)                       |
-| `.github/workflows/` | Pipelines GitHub Actions (étape 3)                   |
+| Dossier              | Contenu                                        |
+| -------------------- | ---------------------------------------------- |
+| `api/`               | API Python (FastAPI + SQLAlchemy) et ses tests |
+| `frontend/`          | Page web statique (HTML, CSS, JavaScript)      |
+| `k8s/`               | Manifests Kubernetes                           |
+| `.github/workflows/` | Pipelines GitHub Actions                       |
 
 ## Lancer en local (étape 1)
 
