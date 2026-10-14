@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Bases SQLite locales
+*.db
+
+# Secrets / config locale
+.env
+
+# Éditeurs
+.vscode/
+.idea/
