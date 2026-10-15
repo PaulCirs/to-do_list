@@ -1,0 +1,41 @@
+# Lance les 3 parties de l'appli : base PostgreSQL, API, front nginx.
+#   docker compose up --build      → construit les images et démarre tout
+#   docker compose down            → arrête (les données restent dans le volume)
+#   docker compose down -v         → arrête ET supprime les données
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-todo}   # valeur par défaut "todo", surchargeable via un fichier .env
+      POSTGRES_DB: todo
+    volumes:
+      - db-data:/var/lib/postgresql   # les données survivent à la suppression du conteneur
+    healthcheck:
+      # Docker teste régulièrement si Postgres accepte les connexions
+      test: ["CMD-SHELL", "pg_isready -U todo -d todo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    environment:
+      # "db" = nom du service ci-dessus, joignable par ce nom sur le réseau Docker
+      DATABASE_URL: postgresql+psycopg://todo:${POSTGRES_PASSWORD:-todo}@db:5432/todo
+    depends_on:
+      db:
+        condition: service_healthy   # attend que Postgres soit prêt, pas juste démarré
+    ports:
+      - "8000:8000"   # pratique pour accéder à http://localhost:8000/docs
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "8080:80"   # l'appli : http://localhost:8080
+
+volumes:
+  db-data:

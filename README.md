@@ -48,11 +48,26 @@ cd api
 pytest
 ```
 
+## Lancer avec Docker (étape 2)
+
+Prérequis : Docker Desktop démarré. Depuis la racine du projet :
+
+```powershell
+docker compose up --build
+```
+
+- L'appli : http://localhost:8080
+- La doc de l'API : http://localhost:8000/docs
+
+Ici l'API utilise **PostgreSQL** (conteneur `db`), et nginx redirige `/api` vers l'API.
+Les données sont gardées dans un volume Docker : `docker compose down` les conserve,
+`docker compose down -v` les efface.
+
 ## Feuille de route
 
 - [x] 0. Dépôt GitHub et structure
 - [x] 1. Appli fonctionnelle en local
-- [ ] 2. Docker : Dockerfiles + docker-compose (avec PostgreSQL)
+- [x] 2. Docker : Dockerfiles + docker-compose (avec PostgreSQL)
 - [ ] 3. CI : GitHub Actions (tests, build, push sur ghcr.io)
 - [ ] 4. Kubernetes local avec kind
 - [ ] 5. CD : GitOps avec Argo CD
