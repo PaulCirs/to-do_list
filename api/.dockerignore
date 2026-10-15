@@ -6,3 +6,4 @@ __pycache__/
 tests/
 *.db
 requirements-dev.txt
+pytest.ini
