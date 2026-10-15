@@ -63,12 +63,23 @@ Ici l'API utilise **PostgreSQL** (conteneur `db`), et nginx redirige `/api` vers
 Les données sont gardées dans un volume Docker : `docker compose down` les conserve,
 `docker compose down -v` les efface.
 
+## Intégration continue (étape 3)
+
+Le workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) tourne à chaque push et pull request :
+
+1. **test** : lint avec `ruff` puis tests avec `pytest`
+2. **build** : construit les images `api` et `frontend` ; sur `main`, les publie sur ghcr.io
+   (`ghcr.io/paulcirs/to-do_list-api` et `ghcr.io/paulcirs/to-do_list-frontend`),
+   avec le tag `latest` et un tag `sha-xxxxxxx` (le commit d'origine)
+
+Lancer le lint en local : `cd api` puis `ruff check .` (ou `ruff check . --fix` pour corriger).
+
 ## Feuille de route
 
 - [x] 0. Dépôt GitHub et structure
 - [x] 1. Appli fonctionnelle en local
 - [x] 2. Docker : Dockerfiles + docker-compose (avec PostgreSQL)
-- [ ] 3. CI : GitHub Actions (tests, build, push sur ghcr.io)
+- [x] 3. CI : GitHub Actions (tests, build, push sur ghcr.io)
 - [ ] 4. Kubernetes local avec kind
 - [ ] 5. CD : GitOps avec Argo CD
 - [ ] 6. Bonus : Helm, probes, HPA, Job de migration

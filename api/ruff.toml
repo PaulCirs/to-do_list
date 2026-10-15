@@ -1,0 +1,8 @@
+# Configuration du linter ruff (vérifie le style et les erreurs courantes)
+line-length = 110
+
+[lint]
+# E/W = style PEP 8, F = erreurs (imports inutilisés...), I = ordre des imports, B = bugs fréquents
+select = ["E", "W", "F", "I", "B"]
+# B008 : FastAPI utilise volontairement Depends(...) comme valeur par défaut
+ignore = ["B008"]
