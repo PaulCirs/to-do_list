@@ -1,6 +1,7 @@
 # Pipeline CI : à chaque push ou pull request, GitHub lance ces jobs sur une machine virtuelle.
 #   1. test  : lint (ruff) + tests (pytest) de l'API
-#   2. build : construit les images Docker, et les publie sur ghcr.io (seulement sur main)
+#   2. build : construit les images Docker, vérifie qu'elles démarrent (smoke test),
+#              puis les publie sur ghcr.io (seulement sur main)
 name: CI
 
 on:
@@ -41,7 +42,13 @@ jobs:
       packages: write         # autorise le push d'images sur ghcr.io
     strategy:
       matrix:                 # le job tourne 2 fois en parallèle : une fois par image
-        component: [api, frontend]
+        include:
+          - component: api
+            port: 8000        # port sur lequel l'appli écoute dans le conteneur
+            check: /health    # URL appelée par le smoke test
+          - component: frontend
+            port: 80
+            check: /
     steps:
       - uses: actions/checkout@v7
 
@@ -64,12 +71,37 @@ jobs:
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build (et push sur main)
+      - name: Build de l'image
         uses: docker/build-push-action@v7
         with:
           context: ${{ matrix.component }}
-          push: ${{ github.event_name == 'push' }}   # sur une pull request : build seulement
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          load: true                                  # garde l'image sur la machine pour le smoke test
+          tags: smoke-test:${{ matrix.component }}
           cache-from: type=gha,scope=${{ matrix.component }}
           cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+
+      # Smoke test : on démarre vraiment l'image et on vérifie qu'elle répond.
+      # (--add-host : nginx refuse de démarrer s'il ne trouve pas l'hôte "api" de sa config ;
+      #  on le fait pointer vers le conteneur lui-même, juste pour le test)
+      - name: Smoke test (l'image démarre-t-elle ?)
+        run: |
+          docker run -d --name smoke --add-host api:127.0.0.1 -p 8080:${{ matrix.port }} smoke-test:${{ matrix.component }}
+          for i in $(seq 1 15); do
+            if curl -fsS http://localhost:8080${{ matrix.check }}; then
+              echo; echo "✅ L'image répond"; exit 0
+            fi
+            sleep 2
+          done
+          echo "❌ L'image ne répond pas, logs du conteneur :"
+          docker logs smoke
+          exit 1
+
+      - name: Push sur ghcr.io (seulement sur main)
+        if: github.event_name == 'push'               # sur une pull request : pas de publication
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.component }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.component }}   # tout est en cache : quasi instantané

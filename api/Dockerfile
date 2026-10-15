@@ -15,8 +15,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Puis le code (change souvent → couche reconstruite à chaque modif)
 COPY app ./app
 
-# Bonne pratique : ne pas tourner en root dans le conteneur
-RUN useradd --create-home appuser
+# Bonne pratique : ne pas tourner en root dans le conteneur.
+# appuser peut écrire dans le dossier /app (pour le fichier SQLite par défaut),
+# mais les fichiers de code restent à root : l'appli ne peut pas modifier son propre code.
+RUN useradd --create-home appuser && chown appuser /app
 USER appuser
 
 EXPOSE 8000
