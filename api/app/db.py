@@ -8,7 +8,10 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./todo.db")
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+# pool_pre_ping : avant de réutiliser une connexion du pool, SQLAlchemy vérifie qu'elle est
+# encore vivante (sinon il en ouvre une neuve). Indispensable quand la base peut redémarrer,
+# par exemple quand Kubernetes recrée le pod Postgres.
+engine = create_engine(DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine)
 
 

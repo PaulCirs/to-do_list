@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: todo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: ghcr.io/paulcirs/to-do_list-frontend:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests: { cpu: 20m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+# NodePort : le Service est aussi ouvert sur un port fixe de chaque nœud (30080).
+# kind-config.yaml relie ce port à localhost:8080 sur ta machine.
+# (Plus tard, un Ingress remplacera ce NodePort comme point d'entrée.)
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: todo
+spec:
+  type: NodePort
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30080

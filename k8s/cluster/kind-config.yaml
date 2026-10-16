@@ -1,0 +1,19 @@
+# Configuration du cluster local kind ("Kubernetes IN Docker") :
+# chaque nœud Kubernetes est un conteneur Docker.
+#   kind create cluster --config k8s/cluster/kind-config.yaml   → crée le cluster "todo"
+#   kind delete cluster --name todo                             → le supprime (et toutes ses données)
+#
+# Ce fichier n'est PAS une ressource Kubernetes (c'est la config de l'outil kind),
+# c'est pourquoi il est rangé à part des manifests de l'appli (k8s/app/).
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: todo
+nodes:
+  - role: control-plane
+    # Le nœud est un conteneur Docker : on publie un de ses ports sur ta machine.
+    # Le Service "frontend" (type NodePort) écoute sur le port 30080 du nœud,
+    # donc http://localhost:8080 → nœud:30080 → Service frontend → pod nginx.
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8080

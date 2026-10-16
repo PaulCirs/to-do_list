@@ -1,0 +1,8 @@
+# Un namespace = un "dossier" dans le cluster qui regroupe les ressources de l'appli.
+# Supprimer le namespace supprime tout ce qu'il contient.
+# Les fichiers sont préfixés par un numéro car "kubectl apply -f k8s/app/" les lit
+# dans l'ordre alphabétique : le namespace doit exister avant le reste.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todo

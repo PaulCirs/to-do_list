@@ -1,0 +1,47 @@
+# Deployment : Kubernetes maintient en permanence "replicas" pods identiques de l'API.
+# Si un pod meurt, il en recrée un ; si on change l'image, il les remplace progressivement.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: todo
+spec:
+  replicas: 2   # l'API ne stocke rien localement (tout est dans Postgres) : on peut en lancer plusieurs
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          # Image publiée par la CI. ":latest" pour démarrer ; à l'étape Argo CD
+          # on passera au tag du commit (sha) pour savoir exactement ce qui tourne.
+          image: ghcr.io/paulcirs/to-do_list-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: DATABASE_URL
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 256Mi }
+---
+# Service : une adresse stable ("api:8000") qui répartit le trafic entre les pods de l'API.
+# Le nom "api" est celui qu'utilise déjà le nginx du front (proxy_pass http://api:8000).
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: todo
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8000
+      targetPort: 8000

@@ -1,0 +1,25 @@
+# ConfigMap : configuration NON sensible, lisible par tous.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  namespace: todo
+data:
+  POSTGRES_USER: todo
+  POSTGRES_DB: todo
+---
+# Secret : valeurs sensibles (mots de passe, URL contenant un mot de passe).
+# ATTENTION : un Secret n'est PAS chiffré, juste encodé en base64. Le versionner dans Git
+# comme ici n'est acceptable que pour un cluster local de démo avec un mot de passe bidon.
+# En vrai projet : Sealed Secrets, External Secrets, SOPS... (piste pour plus tard).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  namespace: todo
+type: Opaque
+# stringData : on écrit les valeurs en clair, Kubernetes les encode lui-même en base64.
+stringData:
+  POSTGRES_PASSWORD: todo
+  # "db" = nom du Service Postgres (voir 20-db.yaml), résolu par le DNS du cluster.
+  DATABASE_URL: postgresql+psycopg://todo:todo@db:5432/todo
