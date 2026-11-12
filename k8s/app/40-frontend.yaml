@@ -16,7 +16,7 @@ spec:
       containers:
         - name: nginx
           # Tag mis à jour automatiquement par le job "deploy" de la CI (voir 30-api.yaml)
-          image: ghcr.io/paulcirs/to-do_list-frontend:sha-4c25ae8
+          image: ghcr.io/paulcirs/to-do_list-frontend:sha-c2820a6
           ports:
             - containerPort: 80
           resources:
