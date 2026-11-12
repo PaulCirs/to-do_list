@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .db import Base, engine, get_db
@@ -45,8 +46,21 @@ class TodoOut(BaseModel):
 
 @app.get("/health")
 def health():
-    """Utilisé plus tard par Kubernetes pour savoir si l'API est vivante."""
+    """Liveness : le processus répond-il ? Ne teste PAS la base exprès :
+    si Postgres tombe, redémarrer l'API ne réparerait rien (voir k8s/app/30-api.yaml)."""
     return {"status": "ok"}
+
+
+@app.get("/ready")
+def ready():
+    """Readiness : l'API peut-elle vraiment servir des requêtes, base de données comprise ?
+    Si non (503), Kubernetes arrête de lui envoyer du trafic, sans la redémarrer."""
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except Exception as err:
+        raise HTTPException(status_code=503, detail="database unavailable") from err
+    return {"status": "ready"}
 
 
 @app.get("/api/todos", response_model=list[TodoOut])
