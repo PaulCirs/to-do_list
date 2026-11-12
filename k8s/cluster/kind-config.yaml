@@ -12,8 +12,8 @@ name: todo
 nodes:
   - role: control-plane
     # Le nœud est un conteneur Docker : on publie un de ses ports sur ta machine.
-    # Le Service "frontend" (type NodePort) écoute sur le port 30080 du nœud,
-    # donc http://localhost:8080 → nœud:30080 → Service frontend → pod nginx.
+    # Le Service du proxy Envoy (type NodePort, cf. k8s/platform/) écoute sur le port 30080
+    # du nœud, donc http://localhost:8080 → nœud:30080 → Envoy → HTTPRoute → front ou API.
     extraPortMappings:
       - containerPort: 30080
         hostPort: 8080

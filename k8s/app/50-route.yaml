@@ -1,0 +1,26 @@
+# HTTPRoute : les règles de routage de l'appli, rattachées à la Gateway "main"
+# (définie dans k8s/platform/envoy-gateway.yaml).
+# Envoy choisit la règle dont le préfixe est le plus long :
+#   /api/...  → Service api:8000 directement (les routes FastAPI commencent déjà par /api)
+#   le reste  → Service frontend:80 (fichiers HTML/JS/CSS)
+# Le proxy /api du nginx du front ne sert donc plus qu'en docker-compose.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: todo
+  namespace: todo
+spec:
+  parentRefs:
+    - name: main
+      namespace: envoy-gateway-system
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: /api }
+      backendRefs:
+        - name: api
+          port: 8000
+    - matches:
+        - path: { type: PathPrefix, value: / }
+      backendRefs:
+        - name: frontend
+          port: 80
