@@ -19,7 +19,7 @@ spec:
         - name: api
           # Image publiée par la CI, avec le tag du commit dont elle est issue (sha-xxxxxxx).
           # Ne pas modifier à la main : le job "deploy" de la CI met ce tag à jour à chaque build.
-          image: ghcr.io/paulcirs/to-do_list-api:sha-c2820a6
+          image: ghcr.io/paulcirs/to-do_list-api:sha-9f69402
           ports:
             - containerPort: 8000
           env:
