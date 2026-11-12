@@ -17,9 +17,9 @@ spec:
     spec:
       containers:
         - name: api
-          # Image publiée par la CI. ":latest" pour démarrer ; à l'étape Argo CD
-          # on passera au tag du commit (sha) pour savoir exactement ce qui tourne.
-          image: ghcr.io/paulcirs/to-do_list-api:latest
+          # Image publiée par la CI, avec le tag du commit dont elle est issue (sha-xxxxxxx).
+          # Ne pas modifier à la main : le job "deploy" de la CI met ce tag à jour à chaque build.
+          image: ghcr.io/paulcirs/to-do_list-api:sha-4c25ae8
           ports:
             - containerPort: 8000
           env:

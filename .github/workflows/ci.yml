@@ -2,13 +2,19 @@
 #   1. test  : lint (ruff) + tests (pytest) de l'API
 #   2. build : construit les images Docker, vérifie qu'elles démarrent (smoke test),
 #              puis les publie sur ghcr.io (seulement sur main)
+#   3. deploy : écrit le tag de ces nouvelles images dans k8s/app/ et le commite sur main
+#               (seulement sur main) → Argo CD voit le changement et déploie
 name: CI
 
 on:
   push:
     branches: [main]
+    # Un commit qui ne touche que k8s/ (ex. changer "replicas") ne change pas le code :
+    # inutile de reconstruire les images, Argo CD appliquera directement le YAML.
+    paths-ignore: ["k8s/**"]
   pull_request:
     branches: [main]
+    paths-ignore: ["k8s/**"]
 
 jobs:
   test:
@@ -105,3 +111,34 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.component }}   # tout est en cache : quasi instantané
+
+  # Le lien entre CI et CD : la CI ne touche jamais au cluster, elle modifie seulement Git.
+  # Argo CD (dans le cluster) voit ce commit et déploie les nouvelles images.
+  deploy:
+    needs: build              # seulement si les 2 images sont construites, testées et publiées
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write         # autorise ce job à pousser un commit sur le dépôt
+    concurrency: deploy       # deux déploiements ne tournent jamais en même temps
+    steps:
+      - uses: actions/checkout@v7
+
+      # Le tag publié par le job build (metadata-action, type=sha) : "sha-" + 7 premiers caractères du commit
+      - name: Mise à jour du tag des images dans k8s/app/
+        run: |
+          TAG="sha-${GITHUB_SHA::7}"
+          sed -i -E "s#(image: ghcr\.io/.+/to-do_list-api):.*#\1:$TAG#" k8s/app/30-api.yaml
+          sed -i -E "s#(image: ghcr\.io/.+/to-do_list-frontend):.*#\1:$TAG#" k8s/app/40-frontend.yaml
+          git diff
+
+      # Le commit est fait avec le jeton GITHUB_TOKEN : GitHub ne relance pas de CI pour
+      # un push fait avec ce jeton (sinon : boucle infinie build → commit → build → ...).
+      # De toute façon il ne touche que k8s/, ignoré par "paths-ignore" plus haut.
+      - name: Commit et push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "deploy: images sha-${GITHUB_SHA::7}" || { echo "Rien à changer"; exit 0; }
+          git pull --rebase       # au cas où un autre commit est arrivé sur main entre-temps
+          git push
