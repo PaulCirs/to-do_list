@@ -6,7 +6,7 @@ metadata:
   name: api
   namespace: todo
 spec:
-  replicas: 3 # l'API ne stocke rien localement (tout est dans Postgres) : on peut en lancer plusieurs
+  replicas: 2   # l'API ne stocke rien localement (tout est dans Postgres) : on peut en lancer plusieurs
   selector:
     matchLabels:
       app: api
