@@ -36,6 +36,19 @@ spec:
           image: postgres:18-alpine
           ports:
             - containerPort: 5432
+          # Readiness : pg_isready (fourni avec Postgres) répond OK quand la base accepte des connexions.
+          # "sh -c" est nécessaire pour que $POSTGRES_USER / $POSTGRES_DB soient remplacés par leur valeur.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 5
+          # Liveness volontairement simple et tolérante : on vérifie juste que le port 5432 est ouvert.
+          # Redémarrer une base pendant qu'elle récupère après un arrêt brutal serait le pire choix,
+          # d'où le délai généreux (6 échecs × 10 s = 1 min) avant de la redémarrer.
+          livenessProbe:
+            tcpSocket: { port: 5432 }
+            periodSeconds: 10
+            failureThreshold: 6
           # Injecte toutes les clés du ConfigMap et du Secret comme variables d'environnement
           envFrom:
             - configMapRef:

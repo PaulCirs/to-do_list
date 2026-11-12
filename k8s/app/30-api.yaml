@@ -22,6 +22,20 @@ spec:
           image: ghcr.io/paulcirs/to-do_list-api:sha-9f69402
           ports:
             - containerPort: 8000
+          # Readiness : "puis-je recevoir du trafic ?" → /ready vérifie aussi la base.
+          # En échec, le pod est retiré du Service (plus de requêtes) mais PAS redémarré.
+          # Pendant un déploiement, un nouveau pod ne reçoit du trafic qu'une fois prêt.
+          readinessProbe:
+            httpGet: { path: /ready, port: 8000 }
+            periodSeconds: 5        # testée toutes les 5 s
+            failureThreshold: 2     # 2 échecs de suite (~10 s) → retiré du trafic
+          # Liveness : "es-tu encore vivant ?" → /health ne teste PAS la base, exprès :
+          # si Postgres tombe, redémarrer les API ne réparerait rien (et les ferait boucler).
+          # En échec, le conteneur est redémarré (ex. processus bloqué qui ne répond plus).
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            periodSeconds: 10
+            failureThreshold: 3     # ~30 s sans réponse → redémarrage
           env:
             - name: DATABASE_URL
               valueFrom:

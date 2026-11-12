@@ -19,6 +19,14 @@ spec:
           image: ghcr.io/paulcirs/to-do_list-frontend:sha-9f69402
           ports:
             - containerPort: 80
+          # nginx sert des fichiers statiques : une même requête sur "/" suffit pour les deux probes
+          # (voir 30-api.yaml pour la différence readiness / liveness).
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /, port: 80 }
+            periodSeconds: 10
           resources:
             requests: { cpu: 20m, memory: 32Mi }
             limits: { memory: 128Mi }
