@@ -1,0 +1,28 @@
+# Application Argo CD "platform" : déploie k8s/platform/ (EnvoyProxy, GatewayClass, Gateway).
+#
+# Une Application = "ce dossier de ce dépôt Git doit être appliqué dans ce cluster".
+# Argo CD compare en boucle Git (l'état voulu) et le cluster (l'état réel) et corrige les écarts.
+#
+# Pré-requis (une seule fois par cluster) : installer Argo CD lui-même
+#   kubectl create namespace argocd
+#   kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/v3.6.1/manifests/install.yaml
+# puis enregistrer ces Applications (c'est le seul "kubectl apply" qui reste à faire à la main) :
+#   kubectl apply -f k8s/argocd/
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform
+  namespace: argocd          # les Applications vivent toujours dans le namespace d'Argo CD
+spec:
+  project: default           # AppProject = règles d'accès (dépôts/namespaces autorisés) ; "default" autorise tout
+  source:
+    repoURL: https://github.com/PaulCirs/to-do_list.git   # dépôt public : pas besoin d'identifiants
+    targetRevision: main     # la branche suivie
+    path: k8s/platform       # le dossier à appliquer
+  destination:
+    server: https://kubernetes.default.svc   # "le cluster où tourne Argo CD"
+    namespace: envoy-gateway-system          # namespace par défaut des ressources qui n'en précisent pas
+  syncPolicy:
+    automated:               # applique tout seul les changements poussés sur Git
+      prune: true            # un YAML supprimé de Git → la ressource est supprimée du cluster
+      selfHeal: true         # une modif faite à la main dans le cluster → annulée, retour à l'état de Git
