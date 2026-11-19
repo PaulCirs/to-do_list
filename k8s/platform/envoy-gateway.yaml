@@ -1,5 +1,5 @@
 # "Plateforme" : ce que le cluster fournit à toutes les applis (ici, le point d'entrée HTTP).
-# Ce n'est pas propre à la to-do list, d'où un dossier à part de k8s/app/.
+# Ce n'est pas propre à la to-do list, d'où un dossier à part du chart de l'appli (k8s/charts/todo/).
 #
 # Gateway API = le successeur officiel de l'Ingress (ingress-nginx est retiré depuis 2026).
 # Elle sépare les rôles :

@@ -7,7 +7,7 @@ Pourquoi un script séparé ?
   - l'API démarre même si la base n'est pas encore prête (la readiness /ready s'en occupe) :
     plus de crash au démarrage ;
   - avec 2 réplicas (ou plus), les pods ne lancent pas tous la même migration en même temps ;
-  - dans Kubernetes, c'est un Job (voir k8s/app/30-api.yaml) : s'il échoue, le déploiement
+  - dans Kubernetes, c'est un Job (voir k8s/charts/todo/templates/api.yaml) : s'il échoue, le déploiement
     s'arrête avant de lancer une API qui ne trouverait pas ses tables.
 
 create_all est idempotent : relancé sur une base déjà à jour, il ne fait rien.

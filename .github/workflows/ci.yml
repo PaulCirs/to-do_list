@@ -2,7 +2,8 @@
 #   1. test  : lint (ruff) + tests (pytest) de l'API
 #   2. build : construit les images Docker, vérifie qu'elles démarrent (smoke test),
 #              puis les publie sur ghcr.io (seulement sur main)
-#   3. deploy : écrit le tag de ces nouvelles images dans k8s/app/ et le commite sur main
+#   3. deploy : écrit le tag de ces nouvelles images dans le chart Helm (k8s/charts/todo/values.yaml)
+#               et le commite sur main
 #               (seulement sur main) → Argo CD voit le changement et déploie
 name: CI
 
@@ -131,10 +132,6 @@ jobs:
         run: |
           TAG="sha-${GITHUB_SHA::7}"
           sed -i -E "s#^(\s*tag:\s*)sha-[0-9a-f]+#\1$TAG#" k8s/charts/todo/values.yaml
-          # TRANSITION : k8s/app/ est encore dans le dépôt tant que la bascule vers le chart
-          # n'est pas finie ; ces 2 lignes seront supprimées avec ce dossier.
-          sed -i -E "s#(image: ghcr\.io/.+/to-do_list-api):.*#\1:$TAG#" k8s/app/30-api.yaml
-          sed -i -E "s#(image: ghcr\.io/.+/to-do_list-frontend):.*#\1:$TAG#" k8s/app/40-frontend.yaml
           git diff
 
       # Le commit est fait avec le jeton GITHUB_TOKEN : GitHub ne relance pas de CI pour

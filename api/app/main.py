@@ -39,7 +39,7 @@ class TodoOut(BaseModel):
 @app.get("/health")
 def health():
     """Liveness : le processus répond-il ? Ne teste PAS la base exprès :
-    si Postgres tombe, redémarrer l'API ne réparerait rien (voir k8s/app/30-api.yaml)."""
+    si Postgres tombe, redémarrer l'API ne réparerait rien (voir k8s/charts/todo/templates/api.yaml)."""
     return {"status": "ok"}
 
 

@@ -1,5 +1,5 @@
 # Application Argo CD "metrics-server" : mesure le CPU et la mémoire de chaque pod.
-# Indispensable à l'HPA (k8s/app/35-api-hpa.yaml), qui décide du nombre de pods à partir
+# Indispensable à l'HPA (k8s/charts/todo/templates/hpa.yaml), qui décide du nombre de pods à partir
 # de ces mesures. Bonus : active "kubectl top pods" / "kubectl top nodes".
 #
 # Différence avec platform.yaml et todo-app.yaml : la source n'est pas un dossier de NOTRE
