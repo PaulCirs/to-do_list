@@ -8,7 +8,7 @@ image:
   registry: ghcr.io/paulcirs
   # Tag commun aux images api et frontend, construites depuis le même commit.
   # Ne pas modifier à la main : le job "deploy" de la CI met ce tag à jour à chaque build.
-  tag: sha-268d925
+  tag: sha-7a17bc3
 
 db:
   image: postgres:18-alpine
