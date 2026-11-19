@@ -14,8 +14,15 @@ db:
   image: postgres:18-alpine
   user: todo
   name: todo
-  # Mot de passe bidon, acceptable seulement pour ce cluster local de démo (voir templates/config.yaml).
-  password: todo
+  # Identifiants de la base : CHIFFRÉS avec la clé publique du cluster (Sealed Secrets).
+  # Seul le contrôleur du cluster peut les déchiffrer : ils peuvent donc être dans Git, même public.
+  # Le contrôleur en fait le Secret "secretName" (POSTGRES_PASSWORD et DATABASE_URL).
+  # Générés par : .\scripts\seal-db-credentials.ps1 (à relancer si le cluster est recréé).
+  credentials:
+    secretName: db-credentials-v2
+    encryptedData:
+      DATABASE_URL: AgAHuPHHzqRf8xl67xY6GR+fIINWBG8ELQsYctPpapTw7PpcVWv5yG9ASBfRZrtTwlWVFHqCSuVuyWgtSu4+oX/8/kiuUPAOma0CXblEolZvPclKSTGgNs8fqAGZf1ouqCEYlNRwbKJD4hZWnxpphlYfoUoQb1EfYSfwPVuhzMUrDcX6JH2QZR/4Nj5rK9MljOAHTE1rxEXJqAzAYHsn3s3cLyCFDwOYmfsXASL+DyqG1zedkQDQN/jv+5ZICNwyT3A9879mBjiCHrhqY9KEJu6xE4vd81u75mdaOTcv7JNSkqsBAjArKb9Qh+yu3EvDPMb5fnSWq5CBUYOcdxhH8GAhTtiIgG2MyFHGaiBGgV4UG+gLDhT8aPk3iWnvMGLNfs1HqBXQHOYpGZmysueM1G1KfbIKaQ2AStlpd3Fw3UWJnjj5dCxmXSiSVS1F18RhmcwNYn3Qxc3mZ7Ymk2loCmq8A1YUWti0JsPfQ+sqqAkQHsY0kN4YIFAwnULNiaR+LGvUwMgy0NNqi0h9NnI8ZcLIgwDPHeh21qAPcJ/ZPR5VEVVYyT8exROySs+xLCQSInnqL3j3MLoJz6IUg0+q2BJj2IfViHJozPvVYa40RQNHeaIPtRR2sU2KMuKujj3Wep01IrMlXjkEwbP6rGxe8gEIdFhio7J3dz2zO2oqvf58isOBK34w1Hd+easEef8E7XM2iF7/71dy6gDUtVkvNuf+OpLppmhMM0+38kbshqPMEc1eqBZmw4ys2h91f3k0JQoOdw9BRaSL/MEiv49MkGoO2HiD1SJnVw==
+      POSTGRES_PASSWORD: AgBh1E8TiN92K1B4rNTDDwlKK0rU2R096N1KOf1unEUVfliRVpfUdXSomJjq5zQaeLXFusOGQgw+lTGMC8Sz6zRbTpGDvpjxTlAnzfv2WLK3Md2HgC6kRdMvRXd7q6Y522EhRbq04JWkRWwrCfriidvih9hmuIBPWSwcCZuzSN5MaXvG1PSL4oahlb2Ml2cAhqSj5FA3r4PbSPUe6FPTutVM61rNrFX6+VvpoJDFKYKA7V0Xykc29SudKkGnZXU3Cg/M8zq9Fze/dLgWNY525srpE4ffNeGh3sFYW23G0unkAb+BcIpFcfvFwg5i3k2ti16LKtWAGyIUpArUzbyhcwPy5VYLMw8x1fP8ye8VUlr1jd/hHvhVN2QP2TcjbXxx77yeOU3fTeFLwIuqdit6b7IIqj8PoSRphaCCP8ZORirQNoQGnM7Pu0eIsH26Y0PSJmFykijUax646cBKgh9A53kXLCAQlxo/Z4Vdft3eRjEQCx5FRB413HfTz/55TjbnwsoMERQMf4w3nYkcQ0CRjfm2FKAQQWZfJNI0CEOcSZ3utZauTw1RaSbx1vgzb9PKSnDGcaItztlb0IfNayZDQ+NUExqTxM7aBZAeJENkFMX1Zz00vUh77liPNDJIZWtvn1Gd1dYOCDGoYvTBZjBglZu3cI7oxJV9/AAIDZ0V4zR99lF5Xkde1Z/2//UWwrPd8DL40Dml/XWtJRvsT+hbuzSAZ003bL4tz+wn7yHN0kI22A==
   storage: 1Gi
   resources:
     requests: { cpu: 100m, memory: 128Mi }

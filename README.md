@@ -81,6 +81,6 @@ Lancer le lint en local : `cd api` puis `ruff check .` (ou `ruff check . --fix` 
 - [x] 1. Appli fonctionnelle en local
 - [x] 2. Docker : Dockerfiles + docker-compose (avec PostgreSQL)
 - [x] 3. CI : GitHub Actions (tests, build, push sur ghcr.io)
-- [ ] 4. Kubernetes local avec kind
-- [ ] 5. CD : GitOps avec Argo CD
-- [ ] 6. Bonus : Helm, probes, HPA, Job de migration
+- [x] 4. Kubernetes local avec kind
+- [x] 5. CD : GitOps avec Argo CD
+- [x] 6. Bonus : Helm, probes, HPA, Job de migration, Sealed Secrets

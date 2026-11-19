@@ -8,20 +8,27 @@ data:
   POSTGRES_USER: {{ .Values.db.user }}
   POSTGRES_DB: {{ .Values.db.name }}
 ---
-# Secret : valeurs sensibles (mots de passe, URL contenant un mot de passe).
-# ATTENTION : un Secret n'est PAS chiffré, juste encodé en base64. Le versionner dans Git
-# (ici via values.yaml) n'est acceptable que pour un cluster local de démo avec un mot de passe bidon.
-# En vrai projet : Sealed Secrets, External Secrets, SOPS... (piste pour plus tard).
-apiVersion: v1
-kind: Secret
+# SealedSecret : un Secret CHIFFRÉ, qu'on peut donc versionner dans Git.
+# On ne crée plus le Secret nous-mêmes : le contrôleur Sealed Secrets (k8s/argocd/sealed-secrets.yaml)
+# lit ce SealedSecret, le déchiffre avec la clé privée du cluster et crée le Secret
+# "{{ .Values.db.credentials.secretName }}", utilisé ensuite normalement par la base, l'API et la migration.
+#
+# Pourquoi "-v2" ? L'ancien Secret "db-credentials" (mot de passe "todo", public dans
+# l'historique Git) était créé par Argo CD. Un nouveau nom évite que le contrôleur et
+# Argo CD se disputent la même ressource ; l'ancien est supprimé par Argo CD (prune).
+#
+# Pour changer le mot de passe : .\scripts\seal-db-credentials.ps1, puis coller le résultat
+# dans values.yaml (db.credentials.encryptedData).
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
 metadata:
-  name: db-credentials
+  name: {{ .Values.db.credentials.secretName }}
   namespace: {{ .Release.Namespace }}
-type: Opaque
-# stringData : on écrit les valeurs en clair, Kubernetes les encode lui-même en base64.
-stringData:
-  POSTGRES_PASSWORD: {{ .Values.db.password }}
-  # L'URL est construite à partir des mêmes valeurs : impossible d'oublier de la mettre à jour
-  # quand on change le mot de passe (c'était un risque avec l'ancien YAML écrit à la main).
-  # "db" = nom du Service Postgres (voir db.yaml), résolu par le DNS du cluster.
-  DATABASE_URL: postgresql+psycopg://{{ .Values.db.user }}:{{ .Values.db.password }}@db:5432/{{ .Values.db.name }}
+spec:
+  encryptedData: {{- toYaml .Values.db.credentials.encryptedData | nindent 4 }}
+  # Modèle du Secret que le contrôleur va créer (nom, namespace, type)
+  template:
+    metadata:
+      name: {{ .Values.db.credentials.secretName }}
+      namespace: {{ .Release.Namespace }}
+    type: Opaque
