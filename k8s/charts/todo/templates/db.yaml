@@ -1,0 +1,80 @@
+# Service "headless" (clusterIP: None) : pas d'IP virtuelle, le nom DNS "db"
+# pointe directement sur le pod Postgres. C'est le Service exigé par un StatefulSet.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: {{ .Release.Namespace }}
+spec:
+  clusterIP: None
+  selector:
+    app: db
+  ports:
+    - port: 5432
+---
+# StatefulSet plutôt que Deployment pour une base de données :
+#  - nom de pod stable (db-0, et non db-7f9c8-xk2p) ;
+#  - chaque réplica garde SON propre disque (volumeClaimTemplates), même s'il est recréé.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: {{ .Release.Namespace }}
+spec:
+  serviceName: db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db   # doit correspondre au selector ci-dessus et à celui du Service
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.db.image }}
+          ports:
+            - containerPort: 5432
+          # Readiness : pg_isready (fourni avec Postgres) répond OK quand la base accepte des connexions.
+          # "sh -c" est nécessaire pour que $POSTGRES_USER / $POSTGRES_DB soient remplacés par leur valeur.
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\""]
+            periodSeconds: 5
+          # Liveness volontairement simple et tolérante : on vérifie juste que le port 5432 est ouvert.
+          # Redémarrer une base pendant qu'elle récupère après un arrêt brutal serait le pire choix,
+          # d'où le délai généreux (6 échecs × 10 s = 1 min) avant de la redémarrer.
+          livenessProbe:
+            tcpSocket: { port: 5432 }
+            periodSeconds: 10
+            failureThreshold: 6
+          # Injecte toutes les clés du ConfigMap comme variables d'environnement
+          envFrom:
+            - configMapRef:
+                name: db-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql   # même chemin que le volume de docker-compose
+          # toYaml : recopie tout le bloc "resources" de values.yaml ; nindent 12 : le place
+          # sur une nouvelle ligne avec 12 espaces d'indentation (le YAML est sensible aux espaces).
+          resources: {{- toYaml .Values.db.resources | nindent 12 }}
+  # Pour chaque pod, Kubernetes crée un PersistentVolumeClaim "data-db-0".
+  # kind fournit une StorageClass par défaut qui crée le disque automatiquement.
+  # Le PVC survit à la suppression du pod ET du StatefulSet : les données restent.
+  # (Cette partie ne peut plus être modifiée une fois le StatefulSet créé : changer
+  # db.storage demanderait de supprimer puis recréer le StatefulSet.)
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: {{ .Values.db.storage }}

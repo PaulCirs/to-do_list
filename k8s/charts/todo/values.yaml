@@ -1,0 +1,44 @@
+# Les valeurs du chart : tout ce qu'on veut pouvoir changer SANS toucher aux modèles.
+# Dans les modèles, on les lit avec {{ .Values.<chemin> }}, ex. {{ .Values.image.tag }}.
+#
+# Intérêt : pour un 2e environnement (ex. staging), on garderait les mêmes modèles et on
+# ne changerait que quelques valeurs (moins de pods, autre mot de passe...).
+
+image:
+  registry: ghcr.io/paulcirs
+  # Tag commun aux images api et frontend, construites depuis le même commit.
+  # Ne pas modifier à la main : le job "deploy" de la CI met ce tag à jour à chaque build.
+  tag: sha-0870fb1
+
+db:
+  image: postgres:18-alpine
+  user: todo
+  name: todo
+  # Mot de passe bidon, acceptable seulement pour ce cluster local de démo (voir templates/config.yaml).
+  password: todo
+  storage: 1Gi
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { memory: 512Mi }
+
+api:
+  # Pas de nombre de pods fixe : c'est l'HPA qui décide, entre ces deux bornes.
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70   # en % de resources.requests.cpu
+    scaleDownStabilizationSeconds: 60     # 300 par défaut ; réduit pour voir l'effet en test
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 256Mi }
+
+frontend:
+  replicas: 1
+  resources:
+    requests: { cpu: 20m, memory: 32Mi }
+    limits: { memory: 128Mi }
+
+# Gateway (définie dans k8s/platform/) à laquelle l'HTTPRoute se rattache.
+gateway:
+  name: main
+  namespace: envoy-gateway-system

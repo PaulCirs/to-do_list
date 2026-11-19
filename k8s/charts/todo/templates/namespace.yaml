@@ -1,0 +1,7 @@
+# Le namespace de l'appli. .Release.Namespace = le namespace dans lequel on installe le chart :
+# "todo", choisi par Argo CD (destination.namespace dans k8s/argocd/todo-app.yaml)
+# ou par "--namespace todo" avec helm en ligne de commande.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Release.Namespace }}

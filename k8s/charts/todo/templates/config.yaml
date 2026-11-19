@@ -1,0 +1,27 @@
+# ConfigMap : configuration NON sensible, lisible par tous.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: db-config
+  namespace: {{ .Release.Namespace }}
+data:
+  POSTGRES_USER: {{ .Values.db.user }}
+  POSTGRES_DB: {{ .Values.db.name }}
+---
+# Secret : valeurs sensibles (mots de passe, URL contenant un mot de passe).
+# ATTENTION : un Secret n'est PAS chiffré, juste encodé en base64. Le versionner dans Git
+# (ici via values.yaml) n'est acceptable que pour un cluster local de démo avec un mot de passe bidon.
+# En vrai projet : Sealed Secrets, External Secrets, SOPS... (piste pour plus tard).
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  namespace: {{ .Release.Namespace }}
+type: Opaque
+# stringData : on écrit les valeurs en clair, Kubernetes les encode lui-même en base64.
+stringData:
+  POSTGRES_PASSWORD: {{ .Values.db.password }}
+  # L'URL est construite à partir des mêmes valeurs : impossible d'oublier de la mettre à jour
+  # quand on change le mot de passe (c'était un risque avec l'ancien YAML écrit à la main).
+  # "db" = nom du Service Postgres (voir db.yaml), résolu par le DNS du cluster.
+  DATABASE_URL: postgresql+psycopg://{{ .Values.db.user }}:{{ .Values.db.password }}@db:5432/{{ .Values.db.name }}

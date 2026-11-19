@@ -125,9 +125,14 @@ jobs:
       - uses: actions/checkout@v7
 
       # Le tag publié par le job build (metadata-action, type=sha) : "sha-" + 7 premiers caractères du commit
-      - name: Mise à jour du tag des images dans k8s/app/
+      # Un seul endroit à modifier : "tag:" dans le values.yaml du chart Helm, partagé par les
+      # images api et frontend (et le Job de migration).
+      - name: Mise à jour du tag des images dans le chart Helm
         run: |
           TAG="sha-${GITHUB_SHA::7}"
+          sed -i -E "s#^(\s*tag:\s*)sha-[0-9a-f]+#\1$TAG#" k8s/charts/todo/values.yaml
+          # TRANSITION : k8s/app/ est encore dans le dépôt tant que la bascule vers le chart
+          # n'est pas finie ; ces 2 lignes seront supprimées avec ce dossier.
           sed -i -E "s#(image: ghcr\.io/.+/to-do_list-api):.*#\1:$TAG#" k8s/app/30-api.yaml
           sed -i -E "s#(image: ghcr\.io/.+/to-do_list-frontend):.*#\1:$TAG#" k8s/app/40-frontend.yaml
           git diff

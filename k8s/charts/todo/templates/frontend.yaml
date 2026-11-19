@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    # Même vague que l'API (voir api.yaml). Dans une vague, Argo CD crée les Services
+    # avant les Deployments : le nom "api" existe déjà quand nginx démarre et le résout.
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: nginx
+          image: {{ .Values.image.registry }}/to-do_list-frontend:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 80
+          # nginx sert des fichiers statiques : une même requête sur "/" suffit pour les deux probes
+          # (voir api.yaml pour la différence readiness / liveness).
+          readinessProbe:
+            httpGet: { path: /, port: 80 }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /, port: 80 }
+            periodSeconds: 10
+          resources: {{- toYaml .Values.frontend.resources | nindent 12 }}
+---
+# Service interne (ClusterIP, le type par défaut) : seule la Gateway est exposée
+# hors du cluster, elle envoie ici le trafic grâce à l'HTTPRoute (route.yaml).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80

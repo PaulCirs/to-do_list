@@ -1,5 +1,14 @@
-# Application Argo CD "todo-app" : déploie k8s/app/ (namespace, config, db, api, frontend, route).
+# Application Argo CD "todo-app" : déploie le chart Helm k8s/charts/todo/
+# (namespace, config, db, migration, api + HPA, frontend, route).
 # Mêmes principes que platform.yaml : voir les explications dans ce fichier.
+#
+# Argo CD voit un Chart.yaml dans le dossier : il sait que c'est un chart Helm et en fait
+# le rendu lui-même (équivalent de "helm template"), avec values.yaml, puis applique le
+# YAML obtenu. Ce n'est PAS un "helm install" : la commande "helm list" ne verra rien,
+# c'est Argo CD qui reste le seul à gérer ces ressources.
+#
+# Après une modification de CE fichier, il faut le réappliquer à la main :
+#   kubectl apply -f k8s/argocd/todo-app.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -10,10 +19,17 @@ spec:
   source:
     repoURL: https://github.com/PaulCirs/to-do_list.git
     targetRevision: main
-    path: k8s/app
+    path: k8s/charts/todo
+    helm:
+      # Nom de la "release" Helm (.Release.Name dans les modèles). Par défaut : le nom de l'Application.
+      releaseName: todo-app
+      # Fichiers de valeurs à utiliser, relatifs au dossier du chart. Pour un 2e environnement,
+      # on ajouterait par exemple une 2e Application avec values-staging.yaml en plus.
+      valueFiles:
+        - values.yaml
   destination:
     server: https://kubernetes.default.svc
-    namespace: todo
+    namespace: todo            # devient .Release.Namespace dans les modèles
   syncPolicy:
     automated:
       prune: true

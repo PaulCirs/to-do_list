@@ -1,0 +1,15 @@
+# Un chart Helm = un "paquet" Kubernetes : des modèles de YAML (templates/) + des valeurs
+# par défaut (values.yaml). Helm remplace les {{ ... }} des modèles par les valeurs et
+# produit du YAML Kubernetes classique.
+#
+# Tester le rendu en local, sans rien toucher au cluster :
+#   helm lint k8s/charts/todo
+#   helm template todo-app k8s/charts/todo --namespace todo
+#
+# Dans le cluster, c'est Argo CD qui fait ce rendu (voir k8s/argocd/todo-app.yaml).
+apiVersion: v2              # format de chart de Helm 3 et plus
+name: todo
+description: La to-do list (Postgres, API FastAPI, front nginx) et son routage
+type: application
+version: 0.1.0              # version du CHART (à augmenter quand les modèles changent)
+appVersion: "1.0"           # version de l'appli, purement informative ici : la vraie est image.tag
