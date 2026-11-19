@@ -51,7 +51,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "2"   # après la migration (voir le Job ci-dessus)
 spec:
-  replicas: 2   # l'API ne stocke rien localement (tout est dans Postgres) : on peut en lancer plusieurs
+  # Pas de "replicas" ici : c'est l'HPA (35-api-hpa.yaml) qui choisit le nombre de pods, entre 2 et 5.
+  # On peut en lancer plusieurs car l'API ne stocke rien localement (tout est dans Postgres).
   selector:
     matchLabels:
       app: api

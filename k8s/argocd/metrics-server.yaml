@@ -1,0 +1,37 @@
+# Application Argo CD "metrics-server" : mesure le CPU et la mémoire de chaque pod.
+# Indispensable à l'HPA (k8s/app/35-api-hpa.yaml), qui décide du nombre de pods à partir
+# de ces mesures. Bonus : active "kubectl top pods" / "kubectl top nodes".
+#
+# Différence avec platform.yaml et todo-app.yaml : la source n'est pas un dossier de NOTRE
+# dépôt Git, mais un chart Helm publié par le projet metrics-server. Argo CD sait lire un
+# chart tout seul (pas besoin d'installer helm) : il le "rend" en YAML avec nos valeurs,
+# puis l'applique et le surveille comme le reste.
+#
+# À enregistrer une fois (comme les autres Applications) :
+#   kubectl apply -f k8s/argocd/metrics-server.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metrics-server
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://kubernetes-sigs.github.io/metrics-server/   # dépôt de charts Helm (pas un dépôt Git)
+    chart: metrics-server
+    targetRevision: 3.14.0       # version du chart, figée (comme nos tags sha-xxx) ; app metrics-server 0.9.0
+    helm:
+      # Équivalent du fichier values.yaml qu'on passerait à "helm install -f".
+      valuesObject:
+        args:
+          # metrics-server interroge le kubelet (l'agent Kubernetes de chaque nœud) en HTTPS.
+          # Dans kind, le certificat du kubelet est auto-signé : sans cette option, la
+          # connexion est refusée et aucune mesure ne remonte. À NE PAS faire en production.
+          - --kubelet-insecure-tls
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system       # là où vivent les composants "système" du cluster
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

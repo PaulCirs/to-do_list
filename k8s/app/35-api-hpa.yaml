@@ -1,0 +1,39 @@
+# HorizontalPodAutoscaler (HPA) : ajuste tout seul le nombre de pods de l'API selon la charge.
+# "Horizontal" = ajouter des pods (≠ "vertical" = donner plus de CPU/mémoire à un même pod).
+#
+# Toutes les 15 s, l'HPA lit le CPU des pods (fourni par metrics-server, voir
+# k8s/argocd/metrics-server.yaml) et calcule :
+#     pods voulus = pods actuels × (CPU moyen mesuré / CPU cible)
+# Exemple : 2 pods à 140 % de la cible → 2 × 140/70 = 4 pods.
+#
+# Le pourcentage est relatif à la "request" CPU du conteneur (50m dans 30-api.yaml) :
+# sans request, l'HPA ne peut rien calculer.
+#
+# Important : "replicas" a été retiré du Deployment de l'API. Sinon, à chaque sync,
+# Argo CD (selfHeal) remettrait le nombre de pods écrit dans Git, et se battrait avec l'HPA.
+# C'est désormais l'HPA, et lui seul, qui décide du nombre de pods.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api
+  namespace: todo
+spec:
+  scaleTargetRef:            # ce que l'HPA pilote
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api
+  minReplicas: 2             # jamais moins de 2 : si un pod tombe, l'autre sert encore
+  maxReplicas: 5             # plafond : protège le cluster (et la facture) d'un emballement
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70   # cible : 70 % de la request, soit 35m de CPU par pod en moyenne
+  behavior:
+    scaleDown:
+      # Avant de retirer des pods, l'HPA attend que la charge soit restée basse pendant
+      # cette durée (5 min par défaut) : évite de supprimer des pods pour les recréer aussitôt.
+      # Réduit à 60 s ici pour voir le résultat pendant les tests.
+      stabilizationWindowSeconds: 60
