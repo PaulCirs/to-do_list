@@ -3,6 +3,10 @@ kind: Deployment
 metadata:
   name: frontend
   namespace: todo
+  annotations:
+    # Même vague que l'API (voir 30-api.yaml). Dans une vague, Argo CD crée les Services
+    # avant les Deployments : le nom "api" existe déjà quand nginx démarre et le résout.
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   replicas: 1
   selector:
