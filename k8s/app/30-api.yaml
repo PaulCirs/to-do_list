@@ -29,7 +29,7 @@ spec:
       containers:
         - name: migrate
           # Ne pas modifier à la main : mis à jour par la CI, comme l'image du Deployment plus bas.
-          image: ghcr.io/paulcirs/to-do_list-api:sha-0870fb1
+          image: ghcr.io/paulcirs/to-do_list-api:sha-da4c345
           command: ["python", "-m", "app.migrate"]
           env:
             - name: DATABASE_URL
@@ -65,7 +65,7 @@ spec:
         - name: api
           # Image publiée par la CI, avec le tag du commit dont elle est issue (sha-xxxxxxx).
           # Ne pas modifier à la main : le job "deploy" de la CI met ce tag à jour à chaque build.
-          image: ghcr.io/paulcirs/to-do_list-api:sha-0870fb1
+          image: ghcr.io/paulcirs/to-do_list-api:sha-da4c345
           ports:
             - containerPort: 8000
           # Readiness : "puis-je recevoir du trafic ?" → /ready vérifie aussi la base.
