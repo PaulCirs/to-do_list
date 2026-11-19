@@ -19,14 +19,24 @@ services:
       timeout: 3s
       retries: 10
 
+  # Conteneur éphémère : crée les tables puis s'arrête (même image que l'API, autre commande).
+  migrate:
+    build: ./api
+    command: ["python", "-m", "app.migrate"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://todo:${POSTGRES_PASSWORD:-todo}@db:5432/todo
+    depends_on:
+      db:
+        condition: service_healthy   # attend que Postgres soit prêt, pas juste démarré
+
   api:
     build: ./api
     environment:
       # "db" = nom du service ci-dessus, joignable par ce nom sur le réseau Docker
       DATABASE_URL: postgresql+psycopg://todo:${POSTGRES_PASSWORD:-todo}@db:5432/todo
     depends_on:
-      db:
-        condition: service_healthy   # attend que Postgres soit prêt, pas juste démarré
+      migrate:
+        condition: service_completed_successfully   # l'API ne démarre qu'une fois les tables créées
     ports:
       - "8000:8000"   # pratique pour accéder à http://localhost:8000/docs
 

@@ -6,6 +6,10 @@ os.environ["DATABASE_URL"] = "sqlite:///./test.db"
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.main import app  # noqa: E402
+from app.migrate import migrate  # noqa: E402
+
+# Comme en production : on migre la base AVANT d'utiliser l'API.
+migrate()
 
 
 def test_health():

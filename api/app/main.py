@@ -1,23 +1,15 @@
-from contextlib import asynccontextmanager
-
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .db import Base, engine, get_db
+from .db import engine, get_db
 from .models import Todo
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Au démarrage : crée les tables si elles n'existent pas encore.
-    Base.metadata.create_all(bind=engine)
-    yield
-
-
-app = FastAPI(title="To-do API", lifespan=lifespan)
+# Les tables ne sont PAS créées ici : c'est le rôle de app/migrate.py,
+# lancé avant l'API (Job Kubernetes, service "migrate" de docker-compose).
+app = FastAPI(title="To-do API")
 
 # Autorise le front (servi sur un autre port en local) à appeler l'API.
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])

@@ -27,6 +27,7 @@ cd api
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements-dev.txt
+python -m app.migrate        # crée les tables (à refaire seulement si le modèle change)
 uvicorn app.main:app --reload --port 8000
 ```
 
